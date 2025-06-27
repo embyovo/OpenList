@@ -38,9 +38,9 @@ FetchWebDev() {
   pre_release_tag=$(eval "curl -fsSL --max-time 2 $githubAuthArgs https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases" | jq -r 'map(select(.prerelease)) | first | .tag_name')
   if [ -z "$pre_release_tag" ] || [ "$pre_release_tag" == "null" ]; then
     # fall back to latest release
-    pre_release_json=$(eval "curl -fsSL --max-time 2 $githubAuthArgs -H \"Accept: application/vnd.github.v3+json\" \"https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/latest\"")
+    pre_release_json=$(eval "curl -fsSL --max-time 2 $githubAuthArgs -H \"Accept: application/vnd.github.v3+json\" \"https://api.github.com/repos/2363839605/OpenList-Frontend/releases/latest\"")
   else
-    pre_release_json=$(eval "curl -fsSL --max-time 2 $githubAuthArgs -H \"Accept: application/vnd.github.v3+json\" \"https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/tags/$pre_release_tag\"")
+    pre_release_json=$(eval "curl -fsSL --max-time 2 $githubAuthArgs -H \"Accept: application/vnd.github.v3+json\" \"https://api.github.com/repos/2363839605/OpenList-Frontend/releases/tags/$pre_release_tag\"")
   fi
   pre_release_assets=$(echo "$pre_release_json" | jq -r '.assets[].browser_download_url')
   pre_release_tar_url=$(echo "$pre_release_assets" | grep "openlist-frontend-dist" | grep "\.tar\.gz$")
@@ -250,8 +250,8 @@ BuildReleaseAndroid() {
 BuildReleaseFreeBSD() {
   rm -rf .git/
   mkdir -p "build/freebsd"
-  
-  # Get latest FreeBSD 14.x release version from GitHub 
+
+  # Get latest FreeBSD 14.x release version from GitHub
   freebsd_version=$(eval "curl -fsSL --max-time 2 $githubAuthArgs \"https://api.github.com/repos/freebsd/freebsd-src/tags\"" | \
     jq -r '.[].name' | \
     grep '^release/14\.' | \
@@ -259,14 +259,14 @@ BuildReleaseFreeBSD() {
     tail -1 | \
     sed 's/release\///' | \
     sed 's/\.0$//')
-  
+
   if [ -z "$freebsd_version" ]; then
     echo "Failed to get FreeBSD version, falling back to 14.3"
     freebsd_version="14.3"
   fi
 
   echo "Using FreeBSD version: $freebsd_version"
-  
+
   OS_ARCHES=(amd64 arm64 i386)
   GO_ARCHES=(amd64 arm64 386)
   CGO_ARGS=(x86_64-unknown-freebsd${freebsd_version} aarch64-unknown-freebsd${freebsd_version} i386-unknown-freebsd${freebsd_version})
