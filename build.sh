@@ -35,7 +35,7 @@ ldflags="\
 "
 
 FetchWebDev() {
-  pre_release_tag=$(eval "curl -fsSL --max-time 2 $githubAuthArgs https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases" | jq -r 'map(select(.prerelease)) | first | .tag_name')
+  pre_release_tag=$(eval "curl -fsSL --max-time 2 $githubAuthArgs https://api.github.com/repos/2363839605/OpenList-Frontend/releases" | jq -r 'map(select(.prerelease)) | first | .tag_name')
   if [ -z "$pre_release_tag" ] || [ "$pre_release_tag" == "null" ]; then
     # fall back to latest release
     pre_release_json=$(eval "curl -fsSL --max-time 2 $githubAuthArgs -H \"Accept: application/vnd.github.v3+json\" \"https://api.github.com/repos/2363839605/OpenList-Frontend/releases/latest\"")
@@ -337,7 +337,7 @@ if [ "$1" = "dev" ]; then
   fi
 elif [ "$1" = "release" -o "$1" = "beta" ]; then
   if [ "$1" = "beta" ]; then
-    FetchWebDev
+    FetchWebRelease
   else
     FetchWebRelease
   fi
