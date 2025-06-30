@@ -88,7 +88,16 @@ func FsMove(c *gin.Context) {
 		common.ErrorResp(c, err, 403)
 		return
 	}
-	
+
+	if !req.Overwrite {
+		for _, name := range req.Names {
+			if res, _ := fs.Get(c, stdpath.Join(dstDir, name), &fs.GetArgs{NoLog: true}); res != nil {
+				common.ErrorStrResp(c, fmt.Sprintf("file [%s] exists", name), 403)
+				return
+			}
+		}
+	}
+
 	// Create all tasks immediately without any synchronous validation
 	// All validation will be done asynchronously in the background
 	var addedTasks []task.TaskExtensionInfo
@@ -102,12 +111,12 @@ func FsMove(c *gin.Context) {
 			return
 		}
 	}
-	
+
 	// Return immediately with task information
 	if len(addedTasks) > 0 {
 		common.SuccessResp(c, gin.H{
 			"message": fmt.Sprintf("Successfully created %d move task(s)", len(addedTasks)),
-			"tasks": getTaskInfos(addedTasks),
+			"tasks":   getTaskInfos(addedTasks),
 		})
 	} else {
 		common.SuccessResp(c, gin.H{
@@ -141,7 +150,16 @@ func FsCopy(c *gin.Context) {
 		common.ErrorResp(c, err, 403)
 		return
 	}
-	
+
+	if !req.Overwrite {
+		for _, name := range req.Names {
+			if res, _ := fs.Get(c, stdpath.Join(dstDir, name), &fs.GetArgs{NoLog: true}); res != nil {
+				common.ErrorStrResp(c, fmt.Sprintf("file [%s] exists", name), 403)
+				return
+			}
+		}
+	}
+
 	// Create all tasks immediately without any synchronous validation
 	// All validation will be done asynchronously in the background
 	var addedTasks []task.TaskExtensionInfo
@@ -155,12 +173,12 @@ func FsCopy(c *gin.Context) {
 			return
 		}
 	}
-	
+
 	// Return immediately with task information
 	if len(addedTasks) > 0 {
 		common.SuccessResp(c, gin.H{
 			"message": fmt.Sprintf("Successfully created %d copy task(s)", len(addedTasks)),
-			"tasks": getTaskInfos(addedTasks),
+			"tasks":   getTaskInfos(addedTasks),
 		})
 	} else {
 		common.SuccessResp(c, gin.H{
@@ -361,13 +379,13 @@ func Link(c *gin.Context) {
 	if storage.Config().OnlyLocal {
 		common.SuccessResp(c, model.Link{
 			URL: fmt.Sprintf("%s/p%s?d&sign=%s",
-				common.GetApiUrl(c.Request),
+				common.GetApiUrl(c),
 				utils.EncodePath(rawPath, true),
 				sign.Sign(rawPath)),
 		})
 		return
 	}
-	link, _, err := fs.Link(c, rawPath, model.LinkArgs{IP: c.ClientIP(), Header: c.Request.Header, HttpReq: c.Request})
+	link, _, err := fs.Link(c, rawPath, model.LinkArgs{IP: c.ClientIP(), Header: c.Request.Header})
 	if err != nil {
 		common.ErrorResp(c, err, 500)
 		return
