@@ -25,7 +25,7 @@ import (
 const (
 	Api              = "https://www.123pan.com/api"
 	AApi             = "https://www.123pan.com/a/api"
-	BApi             = "https://www.123pan.com/b/api"
+	BApi             = "https://www.123912.com/api"
 	LoginApi         = "https://login.123pan.com/api"
 	MainApi          = BApi
 	SignIn           = LoginApi + "/user/sign_in"
@@ -161,11 +161,21 @@ func (d *Pan123) login() error {
 	}
 	res, err := base.RestyClient.R().
 		SetHeaders(map[string]string{
-			"origin":      "https://www.123pan.com",
-			"referer":     "https://www.123pan.com/",
-			"user-agent":  "Dart/2.19(dart:io)-openlist",
-			"platform":    "web",
-			"app-version": "3",
+			//"user-agent":    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) alist-client",Add commentMore actions
+			//"platform":    "web",
+			//"app-version": "3",
+			"content-type":    "application/json",
+			"user-agent":      "123pan/v2.5.8(Android 13:Redmi)",
+			"accept-encoding": "gzip",
+			"osversion":       "Android 13",
+			"loginuuid":       "fc1bdf9a123b4c36ba14113934ee1283",
+			"platform":        "android",
+			"devicetype":      "22041211AC",
+			"x-channel":       "1004",
+			"devicename":      "Redmi",
+			"host":            "www.123912.com",
+			"app-version":     "67",
+			"x-app-version":   "2.5.8",
 			//"user-agent":  base.UserAgent,
 		}).
 		SetBody(body).Post(SignIn)
