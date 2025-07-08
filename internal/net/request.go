@@ -3,6 +3,7 @@ package net
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -119,7 +120,7 @@ type ConcurrencyLimit struct {
 	Limit int // 需要大于0
 }
 
-var ErrExceedMaxConcurrency = fmt.Errorf("ExceedMaxConcurrency")
+var ErrExceedMaxConcurrency = errors.New("ExceedMaxConcurrency")
 
 func (l *ConcurrencyLimit) sub() error {
 	l._m.Lock()
@@ -182,11 +183,10 @@ func (d *downloader) download() (io.ReadCloser, error) {
 			defer d.m.Unlock()
 			if closeFunc != nil {
 				d.concurrencyFinish()
-				err := closeFunc()
+				err = closeFunc()
 				closeFunc = nil
-				return err
 			}
-			return nil
+			return err
 		})
 		return resp.Body, nil
 	}
@@ -272,24 +272,27 @@ func (d *downloader) sendChunkTask(newConcurrency bool) error {
 
 // when the final reader Close, we interrupt
 func (d *downloader) interrupt() error {
-	if d.written != d.params.Range.Length {
+	d.m.Lock()
+	defer d.m.Unlock()
+	err := d.err
+	if err == nil && d.written != d.params.Range.Length {
 		log.Debugf("Downloader interrupt before finish")
-		if d.getErr() == nil {
-			d.setErr(fmt.Errorf("interrupted"))
-		}
+		err := fmt.Errorf("interrupted")
+		d.err = err
 	}
-	d.cancel(d.err)
-	defer func() {
-		close(d.chunkChannel)
+	close(d.chunkChannel)
+	if d.bufs != nil {
+		d.cancel(err)
 		for _, buf := range d.bufs {
 			buf.Close()
 		}
+		d.bufs = nil
 		if d.concurrency > 0 {
 			d.concurrency = -d.concurrency
 		}
 		log.Debugf("maxConcurrency:%d", d.cfg.Concurrency+d.concurrency)
-	}()
-	return d.err
+	}
+	return err
 }
 func (d *downloader) getBuf(id int) (b *Buf) {
 	return d.bufs[id%len(d.bufs)]
@@ -309,31 +312,35 @@ func (d *downloader) finishBuf(id int) (isLast bool, nextBuf *Buf) {
 // downloadPart is an individual goroutine worker reading from the ch channel
 // and performing Http request on the data with a given byte range.
 func (d *downloader) downloadPart() {
-	//defer d.wg.Done()
+	defer d.concurrencyFinish()
 	for {
-		c, ok := <-d.chunkChannel
-		if !ok {
-			break
-		}
-		if d.getErr() != nil {
-			// Drain the channel if there is an error, to prevent deadlocking
-			// of download producer.
-			break
-		}
-		if err := d.downloadChunk(&c); err != nil {
-			if err == errCancelConcurrency {
-				break
+		select {
+		case <-d.ctx.Done():
+			return
+		case c, ok := <-d.chunkChannel:
+			if !ok {
+				return
 			}
-			if err == context.Canceled {
-				if e := context.Cause(d.ctx); e != nil {
-					err = e
+			if d.getErr() != nil {
+				// Drain the channel if there is an error, to prevent deadlocking
+				// of download producer.
+				return
+			}
+			if err := d.downloadChunk(&c); err != nil {
+				if err == errCancelConcurrency {
+					return
 				}
+				if err == context.Canceled {
+					if e := context.Cause(d.ctx); e != nil {
+						err = e
+					}
+				}
+				d.setErr(err)
+				d.cancel(err)
+				return
 			}
-			d.setErr(err)
-			d.cancel(err)
 		}
 	}
-	d.concurrencyFinish()
 }
 
 // downloadChunk downloads the chunk
@@ -385,8 +392,8 @@ func (d *downloader) downloadChunk(ch *chunk) error {
 	return err
 }
 
-var errCancelConcurrency = fmt.Errorf("cancel concurrency")
-var errInfiniteRetry = fmt.Errorf("infinite retry")
+var errCancelConcurrency = errors.New("cancel concurrency")
+var errInfiniteRetry = errors.New("infinite retry")
 
 func (d *downloader) tryDownloadChunk(params *HttpRequestParams, ch *chunk) (int64, error) {
 	resp, err := d.cfg.HttpClient(d.ctx, params)
