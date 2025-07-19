@@ -27,7 +27,7 @@ const (
 	AApi             = "https://www.123pan.com/a/api"
 	BApi             = "https://www.123912.com/api"
 	LoginApi         = "https://login.123pan.com/api"
-	MainApi          = BApi
+	MainApi          = AApi
 	SignIn           = LoginApi + "/user/sign_in"
 	Logout           = MainApi + "/user/logout"
 	UserInfo         = MainApi + "/user/info"
@@ -165,17 +165,18 @@ func (d *Pan123) login() error {
 			//"platform":    "web",
 			//"app-version": "3",
 			"content-type":    "application/json",
-			"user-agent":      "123pan/v2.5.8(Android 13:Redmi)",
+			"user-agent":      "123pan/v2.5.11(Android_13;Redmi)",
 			"accept-encoding": "gzip",
-			"osversion":       "Android 13",
+			"osversion":       "Android_13",
 			"loginuuid":       "fc1bdf9a123b4c36ba14113934ee1283",
 			"platform":        "android",
 			"devicetype":      "22041211AC",
-			"x-channel":       "1004",
+			"x-channel":       "1003",
 			"devicename":      "Redmi",
-			"host":            "www.123912.com",
-			"app-version":     "67",
-			"x-app-version":   "2.5.8",
+			"host":            "www.123pan.com",
+			"app-version":     "84",
+			"x-app-version":   "2.5.11",
+			"devicemodel":     "22041211AC",
 			//"user-agent":  base.UserAgent,
 		}).
 		SetBody(body).Post(SignIn)
@@ -209,12 +210,22 @@ func (d *Pan123) Request(url string, method string, callback base.ReqCallback, r
 do:
 	req := base.RestyClient.R()
 	req.SetHeaders(map[string]string{
-		"origin":        "https://www.123pan.com",
-		"referer":       "https://www.123pan.com/",
-		"authorization": "Bearer " + d.AccessToken,
-		"user-agent":    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) openlist-client",
-		"platform":      "web",
-		"app-version":   "3",
+		"origin":          "https://www.123pan.com",
+		"referer":         "https://www.123pan.com/",
+		"authorization":   "Bearer " + d.AccessToken,
+		"content-type":    "application/json",
+		"user-agent":      "123pan/v2.5.11(Android_13;Redmi)",
+		"accept-encoding": "gzip",
+		"osversion":       "Android_13",
+		"loginuuid":       "fc1bdf9a123b4c36ba14113934ee1283",
+		"platform":        "android",
+		"devicetype":      "22041211AC",
+		"x-channel":       "1003",
+		"devicename":      "Redmi",
+		"host":            "www.123pan.com",
+		"app-version":     "84",
+		"x-app-version":   "2.5.11",
+		"devicemodel":     "22041211AC",
 		//"user-agent":    base.UserAgent,
 	})
 	if callback != nil {
