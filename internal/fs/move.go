@@ -3,11 +3,11 @@ package fs
 import (
 	"context"
 	"fmt"
-	"net/http"
 	stdpath "path"
 	"sync"
 	"time"
 
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
 	"github.com/OpenListTeam/OpenList/v4/internal/driver"
 	"github.com/OpenListTeam/OpenList/v4/internal/errs"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
@@ -346,23 +346,18 @@ func (t *MoveTask) copyFile(srcStorage, dstStorage driver.Driver, srcFilePath, d
 		return errors.WithMessagef(err, "failed get src [%s] file", srcFilePath)
 	}
 
-	link, _, err := op.Link(t.Ctx(), srcStorage, srcFilePath, model.LinkArgs{
-		Header: http.Header{},
-	})
+	link, _, err := op.Link(t.Ctx(), srcStorage, srcFilePath, model.LinkArgs{})
 	if err != nil {
 		return errors.WithMessagef(err, "failed get [%s] link", srcFilePath)
 	}
-
-	fs := stream.FileStream{
+	ss, err := stream.NewSeekableStream(&stream.FileStream{
 		Obj: srcFile,
 		Ctx: t.Ctx(),
-	}
-
-	ss, err := stream.NewSeekableStream(fs, link)
+	}, link)
 	if err != nil {
+		_ = link.Close()
 		return errors.WithMessagef(err, "failed get [%s] stream", srcFilePath)
 	}
-
 	return op.Put(t.Ctx(), dstStorage, dstDirPath, ss, nil, true)
 }
 
@@ -592,7 +587,7 @@ func _moveWithValidation(ctx context.Context, srcObjPath, dstDirPath string, val
 		}
 	}
 
-	taskCreator, _ := ctx.Value("user").(*model.User)
+	taskCreator, _ := ctx.Value(conf.UserKey).(*model.User)
 
 	// Create task immediately without any synchronous checks to avoid blocking frontend
 	// All validation and type checking will be done asynchronously in the Run method

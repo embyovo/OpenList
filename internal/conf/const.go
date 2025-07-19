@@ -63,6 +63,9 @@ const (
 	// 115
 	Pan115TempDir = "115_temp_dir"
 
+	// 115_open
+	Pan115OpenTempDir = "115_open_temp_dir"
+
 	// pikpak
 	PikPakTempDir = "pikpak_temp_dir"
 
@@ -146,7 +149,19 @@ const (
 )
 
 // ContextKey is the type of context keys.
+type ContextKey int
+
 const (
-	NoTaskKey = "no_task"
-	ApiUrlKey = "api_url"
+	_ ContextKey = iota
+
+	NoTaskKey
+	ApiUrlKey
+	UserKey
+	MetaKey
+	MetaPassKey
+	ClientIPKey
+	ProxyHeaderKey
+	RequestHeaderKey
+	UserAgentKey
+	PathKey
 )
