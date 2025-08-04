@@ -30,7 +30,7 @@ env:
   IMAGE_NAME_DOCKERHUB: openlist
   REGISTRY: ghcr.io
   ARTIFACT_NAME: 'binaries_docker_release'
-  RELEASE_PLATFORMS: 'linux/amd64,linux/arm64,linux/arm/v7,linux/386,linux/arm/v6,linux/ppc64le,linux/riscv64,linux/loong64'
+  RELEASE_PLATFORMS: 'linux/amd64,linux/arm64,linux/arm/v7,linux/386,linux/arm/v6,linux/ppc64le,linux/riscv64'
   IMAGE_PUSH: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
 
 permissions:
