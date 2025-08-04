@@ -24,9 +24,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DOCKERHUB_ORG_NAME: ${{ vars.DOCKERHUB_ORG_NAME || 'openlistteam' }}
+  DOCKERHUB_ORG_NAME: ${{ vars.DOCKERHUB_ORG_NAME || 'embyovo' }}
   GHCR_ORG_NAME: ${{ vars.GHCR_ORG_NAME || 'openlistteam' }}
-  IMAGE_NAME: openlist-git
+  IMAGE_NAME: openlist
   IMAGE_NAME_DOCKERHUB: openlist
   REGISTRY: ghcr.io
   ARTIFACT_NAME: 'binaries_docker_release'
