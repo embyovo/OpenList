@@ -4,6 +4,9 @@ builtAt="$(date +'%F %T %z')"
 gitAuthor="The OpenList Projects Contributors <noreply@openlist.team>"
 gitCommit=$(git log --pretty=format:"%h" -1)
 
+# Set frontend repository, default to OpenListTeam/OpenList-Frontend
+frontendRepo="${FRONTEND_REPO:-embyovo/OpenList-Frontend}"
+
 githubAuthArgs=""
 if [ -n "$GITHUB_TOKEN" ]; then
   githubAuthArgs="--header \"Authorization: Bearer $GITHUB_TOKEN\""
@@ -11,10 +14,10 @@ fi
 
 if [ "$1" = "dev" ]; then
   version="dev"
-  webVersion="dev"
+  webVersion="rolling"
 elif [ "$1" = "beta" ]; then
   version="beta"
-  webVersion="dev"
+  webVersion="rolling"
 else
   git tag -d beta || true
   # Always true if there's no tag
