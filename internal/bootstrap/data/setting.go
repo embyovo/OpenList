@@ -237,6 +237,13 @@ func InitialSettings() []model.SettingItem {
 		return additionalSettingItems[i].Key < additionalSettingItems[j].Key
 	})
 	initialSettingItems = append(initialSettingItems, additionalSettingItems...)
+
+	//WebDAV设置
+	initialSettingItems = append(initialSettingItems, []model.SettingItem{
+		{Key: "webdav_enabled", Value: "true", Type: conf.TypeBool, Group: model.WEBDAV, Flag: model.PUBLIC, Help: "启用或禁用WebDAV服务"},
+		{Key: "webdav_listen", Value: "5245", Type: conf.TypeString, Group: model.WEBDAV, Flag: model.PRIVATE, Help: "WebDAV服务监听地址，格式：IP:端口 或 端口"},
+	}...)
+
 	if flags.Dev {
 		initialSettingItems = append(initialSettingItems, []model.SettingItem{
 			{Key: "test_deprecated", Value: "test_value", Type: conf.TypeString, Flag: model.DEPRECATED},

@@ -164,7 +164,8 @@ func admin(g *gin.RouterGroup) {
 	setting.POST("/set_thunder", handles.SetThunder)
 	setting.POST("/set_thunderx", handles.SetThunderX)
 	setting.POST("/set_thunder_browser", handles.SetThunderBrowser)
-
+	setting.POST("/set_webdav", handles.SetWebDAV) // 添加WebDAV设置路由
+	setting.GET("/get_webdav", handles.GetWebDAV)
 	// retain /admin/task API to ensure compatibility with legacy automation scripts
 	_task(g.Group("/task"))
 

@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"strings"
 )
 
 // ServerCmd represents the server command
@@ -62,7 +63,7 @@ the address is defined in config file`,
 		if conf.Conf.Scheme.EnableH2c {
 			httpHandler = h2c.NewHandler(r, &http2.Server{})
 		}
-		var httpSrv, httpsSrv, unixSrv *http.Server
+		var httpSrv, httpsSrv, unixSrv, webdavSrv *http.Server
 		if conf.Conf.Scheme.HttpPort != -1 {
 			httpBase := fmt.Sprintf("%s:%d", conf.Conf.Scheme.Address, conf.Conf.Scheme.HttpPort)
 			fmt.Printf("start HTTP server @ %s\n", httpBase)
@@ -131,6 +132,23 @@ the address is defined in config file`,
 				}
 				if err != nil && !errors.Is(err, http.ErrServerClosed) {
 					utils.Log.Fatalf("failed to start s3 server: %s", err.Error())
+				}
+			}()
+		}
+		if conf.Conf.WebDAV.Listen != "" && conf.Conf.WebDAV.Enable {
+			webdavR := server.InitWebDAVServer()
+			webdavBase := conf.Conf.WebDAV.Listen
+			// 检查地址是否已包含冒号，如果没有则添加
+			if !strings.Contains(webdavBase, ":") {
+				webdavBase = ":" + webdavBase
+			}
+			fmt.Printf("start WebDAV server @ %s\n", webdavBase)
+			utils.Log.Infof("start WebDAV server @ %s", webdavBase)
+			go func() {
+				webdavSrv = &http.Server{Addr: webdavBase, Handler: webdavR}
+				err := webdavSrv.ListenAndServe()
+				if err != nil && !errors.Is(err, http.ErrServerClosed) {
+					utils.Log.Fatalf("failed to start WebDAV server: %s", err.Error())
 				}
 			}()
 		}
@@ -229,6 +247,15 @@ the address is defined in config file`,
 				defer wg.Done()
 				if err := sftpServer.Close(); err != nil {
 					utils.Log.Fatal("SFTP server shutdown err: ", err)
+				}
+			}()
+		}
+		if conf.Conf.WebDAV.Listen != "" && conf.Conf.WebDAV.Enable && webdavSrv != nil {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := webdavSrv.Shutdown(ctx); err != nil {
+					utils.Log.Fatal("WebDAV server shutdown err: ", err)
 				}
 			}()
 		}

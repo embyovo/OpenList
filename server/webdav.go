@@ -21,6 +21,7 @@ import (
 
 var handler *webdav.Handler
 
+// 保留原有的WebDav函数，用于主HTTP服务中的WebDAV支持
 func WebDav(dav *gin.RouterGroup) {
 	handler = &webdav.Handler{
 		Prefix:     path.Join(conf.URL.Path, "/dav"),
@@ -42,6 +43,51 @@ func WebDav(dav *gin.RouterGroup) {
 	dav.Handle("PROPPATCH", "/*path", ServeWebDAV)
 	dav.Handle("COPY", "/*path", ServeWebDAV)
 	dav.Handle("MOVE", "/*path", ServeWebDAV)
+}
+
+// 新增函数，用于创建独立的WebDAV服务
+func InitWebDAVServer() *gin.Engine {
+	r := gin.New()
+
+	// 使用与主服务相同的日志配置
+	if conf.Conf.Log.Filter.Enable {
+		r.Use(middlewares.FilteredLogger())
+	} else {
+		r.Use(gin.LoggerWithWriter(log.StandardLogger().Out))
+	}
+	r.Use(gin.RecoveryWithWriter(log.StandardLogger().Out))
+
+	// 设置CORS
+	Cors(r)
+
+	// 创建WebDAV处理器
+	handler = &webdav.Handler{
+		Prefix:     "/", // 根路径，因为这是独立服务
+		LockSystem: webdav.NewMemLS(),
+		Logger: func(request *http.Request, err error) {
+			log.Errorf("%s %s %+v", request.Method, request.URL.Path, err)
+		},
+	}
+
+	// 添加WebDAV路由
+	davGroup := r.Group("/")
+	davGroup.Use(WebDAVAuth)
+	uploadLimiter := middlewares.UploadRateLimiter(stream.ClientUploadLimit)
+	downloadLimiter := middlewares.DownloadRateLimiter(stream.ClientDownloadLimit)
+
+	// 只保留通配符路径的路由注册
+	davGroup.Any("/*path", uploadLimiter, downloadLimiter, ServeWebDAV)
+	// 删除这一行: davGroup.Any("", uploadLimiter, downloadLimiter, ServeWebDAV)
+	davGroup.Handle("PROPFIND", "/*path", ServeWebDAV)
+	// 删除这一行: davGroup.Handle("PROPFIND", "", ServeWebDAV)
+	davGroup.Handle("MKCOL", "/*path", ServeWebDAV)
+	davGroup.Handle("LOCK", "/*path", ServeWebDAV)
+	davGroup.Handle("UNLOCK", "/*path", ServeWebDAV)
+	davGroup.Handle("PROPPATCH", "/*path", ServeWebDAV)
+	davGroup.Handle("COPY", "/*path", ServeWebDAV)
+	davGroup.Handle("MOVE", "/*path", ServeWebDAV)
+
+	return r
 }
 
 func ServeWebDAV(c *gin.Context) {

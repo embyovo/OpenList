@@ -109,3 +109,15 @@ func callStorageHooks(typ string, storage driver.Driver) {
 func RegisterStorageHook(hook StorageHook) {
 	storageHooks = append(storageHooks, hook)
 }
+
+func init() {
+	// WebDAV设置钩子
+	settingItemHooks["webdav_enabled"] = func(item *model.SettingItem) error {
+		conf.Conf.WebDAV.Enable = item.Value == "true"
+		return nil
+	}
+	settingItemHooks["webdav_listen"] = func(item *model.SettingItem) error {
+		conf.Conf.WebDAV.Listen = item.Value
+		return nil
+	}
+}
