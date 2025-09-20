@@ -17,6 +17,7 @@ import (
 type Open123 struct {
 	model.Storage
 	Addition
+	UID uint64
 }
 
 func (d *Open123) Config() driver.Config {
@@ -83,7 +84,7 @@ func (d *Open123) Link(ctx context.Context, file model.Obj, args model.LinkArgs)
 			}, nil
 		}
 
-		u, err := d.getUserInfo()
+		uid, err := d.getUID()
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +92,7 @@ func (d *Open123) Link(ctx context.Context, file model.Obj, args model.LinkArgs)
 		duration := time.Duration(d.DirectLinkValidDuration) * time.Minute
 
 		newURL, err := d.SignURL(res.Data.URL, d.DirectLinkPrivateKey,
-			u.Data.UID, duration)
+			uid, duration)
 		if err != nil {
 			return nil, err
 		}
@@ -211,6 +212,21 @@ func (d *Open123) Put(ctx context.Context, dstDir model.Obj, file model.FileStre
 		time.Sleep(time.Second)
 	}
 	return nil, fmt.Errorf("upload complete timeout")
+}
+
+func (d *Open123) GetDetails(ctx context.Context) (*model.StorageDetails, error) {
+	userInfo, err := d.getUserInfo()
+	if err != nil {
+		return nil, err
+	}
+	total := userInfo.Data.SpacePermanent + userInfo.Data.SpaceTemp
+	free := total - userInfo.Data.SpaceUsed
+	return &model.StorageDetails{
+		DiskUsage: model.DiskUsage{
+			TotalSpace: total,
+			FreeSpace:  free,
+		},
+	}, nil
 }
 
 var _ driver.Driver = (*Open123)(nil)

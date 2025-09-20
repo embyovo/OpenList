@@ -3,8 +3,6 @@ package handles
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"image"
 	"io"
 	"net/url"
@@ -14,6 +12,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/OpenListTeam/OpenList/v4/internal/conf"
 	"github.com/OpenListTeam/OpenList/v4/internal/fs"
@@ -84,17 +85,22 @@ func FsStream(c *gin.Context) {
 
 	// 解析文件信息
 	dir, name := stdpath.Split(path)
+	// 如果请求头 Content-Length 和 X-File-Size 都没有，则 size=-1，表示未知大小的流式上传
+	size := c.Request.ContentLength
 	sizeStr := c.GetHeader("Content-Length")
-	if sizeStr == "" {
-		sizeStr = "0"
+	if size < 0 {
+		if sizeStr == "" {
+			sizeStr := c.GetHeader("X-File-Size")
+			if sizeStr != "" {
+				sizeStr = "0"
+				size, err = strconv.ParseInt(sizeStr, 10, 64)
+				if err != nil {
+					common.ErrorResp(c, err, 400)
+					return
+				}
+			}
+		}
 	}
-
-	size, err := strconv.ParseInt(sizeStr, 10, 64)
-	if err != nil {
-		common.ErrorResp(c, err, 400)
-		return
-	}
-
 	// 处理文件哈希信息
 	h := make(map[*utils.HashType]string)
 	if md5 := c.GetHeader("X-File-Md5"); md5 != "" {

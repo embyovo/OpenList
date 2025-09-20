@@ -184,6 +184,9 @@ func Get(ctx context.Context, storage driver.Driver, path string) (model.Obj, er
 		if err == nil {
 			return model.WrapObjName(obj), nil
 		}
+		if !errs.IsNotImplement(err) {
+			return nil, errors.WithMessage(err, "failed to get obj")
+		}
 	}
 
 	// is root folder
@@ -327,11 +330,8 @@ func Link(ctx context.Context, storage driver.Driver, path string, args model.Li
 		return nil
 	})
 	link, err, _ := linkG.Do(key, fn)
-	if err == nil && !link.AcquireReference() {
+	for err == nil && !link.AcquireReference() {
 		link, err, _ = linkG.Do(key, fn)
-		if err == nil {
-			link.AcquireReference()
-		}
 	}
 
 	if err == errLinkMFileCache {
@@ -486,12 +486,18 @@ func Rename(ctx context.Context, storage driver.Driver, srcPath, dstName string,
 				updateCacheObj(storage, srcDirPath, srcRawObj, model.WrapObjName(newObj))
 			} else if !utils.IsBool(lazyCache...) {
 				DeleteCache(storage, srcDirPath)
+				if srcRawObj.IsDir() {
+					ClearCache(storage, srcPath)
+				}
 			}
 		}
 	case driver.Rename:
 		err = s.Rename(ctx, srcObj, dstName)
 		if err == nil && !utils.IsBool(lazyCache...) {
 			DeleteCache(storage, srcDirPath)
+			if srcRawObj.IsDir() {
+				ClearCache(storage, srcPath)
+			}
 		}
 	default:
 		return errs.NotImplement
@@ -624,6 +630,11 @@ func Put(ctx context.Context, storage driver.Driver, dstDirPath string, file mod
 		up = func(p float64) {}
 	}
 
+	// 如果小于0，则通过缓存获取完整大小，可能发生于流式上传
+	if file.GetSize() < 0 {
+		log.Warnf("file size < 0, try to get full size from cache")
+		file.CacheFullAndWriter(nil, nil)
+	}
 	switch s := storage.(type) {
 	case driver.PutResult:
 		var newObj model.Obj
