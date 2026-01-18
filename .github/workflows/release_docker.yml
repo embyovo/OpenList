@@ -47,6 +47,17 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25.0'
+          # 启用Go模块缓存，加速依赖下载
+          cache: true
+
+      # ========== 新增：修复go.sum缺失的核心步骤 ==========
+      - name: Fix missing go.sum entries
+        run: |
+          # 自动补全缺失的go.sum条目，清理无用依赖
+          go mod tidy
+          # 验证依赖完整性，确保没有篡改
+          go mod verify
+      # ==================================================
 
       - name: Cache Musl
         id: cache-musl
@@ -75,7 +86,6 @@ jobs:
             build/
             !build/*.tgz
             !build/musl-libs/**
-
   release_docker:
     needs: build_binary
     name: Release Docker image
@@ -146,7 +156,6 @@ jobs:
           flavor: |
             latest=${{ github.event_name == 'push' || github.event.inputs.as_latest == 'true' }}
             ${{ matrix.tag_favor }}
-
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v6
