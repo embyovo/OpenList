@@ -137,6 +137,7 @@ type Config struct {
 	SFTP                  SFTP        `json:"sftp" envPrefix:"SFTP_"`
 	WebDAV                WebDAV      `json:"webdav" envPrefix:"WEBDAV_"`
 	LastLaunchedVersion   string      `json:"last_launched_version"`
+	ProxyAddress          string      `json:"proxy_address" env:"PROXY_ADDRESS"`
 }
 
 func DefaultConfig(dataDir string) *Config {
@@ -254,5 +255,6 @@ func DefaultConfig(dataDir string) *Config {
 			Listen: ":5245",
 		},
 		LastLaunchedVersion: "",
+		ProxyAddress:        "",
 	}
 }

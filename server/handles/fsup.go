@@ -17,8 +17,10 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/errs"
 	"github.com/OpenListTeam/OpenList/v4/internal/fs"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/setting"
 	"github.com/OpenListTeam/OpenList/v4/internal/stream"
 	"github.com/OpenListTeam/OpenList/v4/internal/task"
 	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
@@ -49,6 +51,14 @@ func checkFileExists(ctx context.Context, path string) (bool, error) {
 	}
 
 	return obj != nil, nil // 文件存在
+}
+
+// shouldIgnoreSystemFile checks if the filename should be ignored based on settings
+func shouldIgnoreSystemFile(filename string) bool {
+	if setting.GetBool(conf.IgnoreSystemFiles) {
+		return utils.IsSystemFile(filename)
+	}
+	return false
 }
 
 func FsStream(c *gin.Context) {
@@ -85,6 +95,11 @@ func FsStream(c *gin.Context) {
 
 	// 解析文件信息
 	dir, name := stdpath.Split(path)
+	// Check if system file should be ignored
+	if shouldIgnoreSystemFile(name) {
+		common.ErrorStrResp(c, errs.IgnoredSystemFile.Error(), 403)
+		return
+	}
 	// 如果请求头 Content-Length 和 X-File-Size 都没有，则 size=-1，表示未知大小的流式上传
 	size := c.Request.ContentLength
 	sizeStr := c.GetHeader("Content-Length")
@@ -137,7 +152,7 @@ func FsStream(c *gin.Context) {
 	if asTask {
 		t, err = fs.PutAsTask(c.Request.Context(), dir, s)
 	} else {
-		err = fs.PutDirectly(c.Request.Context(), dir, s, true)
+		err = fs.PutDirectly(c.Request.Context(), dir, s)
 	}
 
 	if err != nil {
@@ -393,7 +408,7 @@ func validateWebPFile(path string) error {
 
 // 创建目录（假设已有的函数）
 func MakeDir(ctx context.Context, path string, lazyCache ...bool) error {
-	err := fs.MakeDir(ctx, path, lazyCache...)
+	err := fs.MakeDir(ctx, path)
 	if err != nil {
 		logrus.Errorf("failed make dir %s: %+v", path, err)
 	}
@@ -448,6 +463,11 @@ func FsForm(c *gin.Context) {
 	}
 	defer f.Close()
 	dir, name := stdpath.Split(path)
+	// Check if system file should be ignored
+	if shouldIgnoreSystemFile(name) {
+		common.ErrorStrResp(c, errs.IgnoredSystemFile.Error(), 403)
+		return
+	}
 	h := make(map[*utils.HashType]string)
 	if md5 := c.GetHeader("X-File-Md5"); md5 != "" {
 		h[utils.MD5] = md5
@@ -480,7 +500,7 @@ func FsForm(c *gin.Context) {
 		}{f}
 		t, err = fs.PutAsTask(c.Request.Context(), dir, s)
 	} else {
-		err = fs.PutDirectly(c.Request.Context(), dir, s, true)
+		err = fs.PutDirectly(c.Request.Context(), dir, s)
 	}
 	if err != nil {
 		common.ErrorResp(c, err, 500)

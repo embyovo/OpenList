@@ -211,6 +211,9 @@ the address is defined in config file`,
 				}()
 			}
 		}
+		bootstrap.Init()
+		defer bootstrap.Release()
+		bootstrap.Start()
 		// Wait for interrupt signal to gracefully shutdown the server with
 		// a timeout of 1 second.
 		quit := make(chan os.Signal, 1)
@@ -219,6 +222,7 @@ the address is defined in config file`,
 		// kill -9 is syscall. SIGKILL but can"t be catch, so don't need add it
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
+		bootstrap.Shutdown(1 * time.Second)
 		utils.Log.Println("Shutdown server...")
 		fs.ArchiveContentUploadTaskManager.RemoveAll()
 		Release()
