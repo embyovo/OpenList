@@ -188,7 +188,7 @@ func DefaultConfig(dataDir string) *Config {
 		MmapThreshold:         4,
 		MaxConnections:        0,
 		MaxConcurrency:        64,
-		TlsInsecureSkipVerify: true,
+		TlsInsecureSkipVerify: false,
 		Tasks: TasksConfig{
 			Download: TaskConfig{
 				Workers:  5,
