@@ -13,7 +13,6 @@ const (
 	S3
 	FTP
 	TRAFFIC
-	WEBDAV // 添加WebDAV设置组
 )
 
 const (

@@ -26,9 +26,9 @@ import (
 const (
 	Api              = "https://www.123pan.com/api"
 	AApi             = "https://www.123pan.com/a/api"
-	BApi             = "https://www.123912.com/api"
+	BApi             = "https://www.123pan.com/b/api"
 	LoginApi         = "https://login.123pan.com/api"
-	MainApi          = AApi
+	MainApi          = BApi
 	SignIn           = LoginApi + "/user/sign_in"
 	Logout           = MainApi + "/user/logout"
 	UserInfo         = MainApi + "/user/info"
@@ -169,22 +169,11 @@ func (d *Pan123) login() error {
 	}
 	res, err := base.RestyClient.R().
 		SetHeaders(map[string]string{
-			//"user-agent":    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) alist-client",Add commentMore actions
-			//"platform":    "web",
-			//"app-version": "3",
-			"content-type":    "application/json",
-			"user-agent":      "123pan/v2.5.11(Android_13;Redmi)",
-			"accept-encoding": "gzip",
-			"osversion":       "Android_13",
-			"loginuuid":       "fc1bdf9a123b4c36ba14113934ee1283",
-			"platform":        "android",
-			"devicetype":      "22041211AC",
-			"x-channel":       "1003",
-			"devicename":      "Redmi",
-			"host":            "www.123pan.com",
-			"app-version":     "84",
-			"x-app-version":   "2.5.11",
-			"devicemodel":     "22041211AC",
+			"origin":      "https://www.123pan.com",
+			"referer":     "https://www.123pan.com/",
+			"user-agent":  "Dart/2.19(dart:io)-openlist",
+			"platform":    "web",
+			"app-version": "3",
 			//"user-agent":  base.UserAgent,
 		}).
 		SetBody(body).Post(SignIn)
@@ -218,22 +207,12 @@ func (d *Pan123) Request(url string, method string, callback base.ReqCallback, r
 do:
 	req := base.RestyClient.R()
 	req.SetHeaders(map[string]string{
-		"origin":          "https://www.123pan.com",
-		"referer":         "https://www.123pan.com/",
-		"authorization":   "Bearer " + d.AccessToken,
-		"content-type":    "application/json",
-		"user-agent":      "123pan/v2.5.11(Android_13;Redmi)",
-		"accept-encoding": "gzip",
-		"osversion":       "Android_13",
-		"loginuuid":       "fc1bdf9a123b4c36ba14113934ee1283",
-		"platform":        "android",
-		"devicetype":      "22041211AC",
-		"x-channel":       "1003",
-		"devicename":      "Redmi",
-		"host":            "www.123pan.com",
-		"app-version":     "84",
-		"x-app-version":   "2.5.11",
-		"devicemodel":     "22041211AC",
+		"origin":        "https://www.123pan.com",
+		"referer":       "https://www.123pan.com/",
+		"authorization": "Bearer " + d.AccessToken,
+		"user-agent":    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) openlist-client",
+		"platform":      d.Platform,
+		"app-version":   "3",
 		//"user-agent":    base.UserAgent,
 	})
 	if callback != nil {

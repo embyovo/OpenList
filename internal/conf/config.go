@@ -106,11 +106,6 @@ type SFTP struct {
 	Listen string `json:"listen" env:"LISTEN"`
 }
 
-type WebDAV struct {
-	Enable bool   `json:"enable" env:"ENABLE"`
-	Listen string `json:"listen" env:"LISTEN"`
-}
-
 type Config struct {
 	Force                 bool        `json:"force" env:"FORCE"`
 	SiteURL               string      `json:"site_url" env:"SITE_URL"`
@@ -135,7 +130,6 @@ type Config struct {
 	S3                    S3          `json:"s3" envPrefix:"S3_"`
 	FTP                   FTP         `json:"ftp" envPrefix:"FTP_"`
 	SFTP                  SFTP        `json:"sftp" envPrefix:"SFTP_"`
-	WebDAV                WebDAV      `json:"webdav" envPrefix:"WEBDAV_"`
 	LastLaunchedVersion   string      `json:"last_launched_version"`
 	ProxyAddress          string      `json:"proxy_address" env:"PROXY_ADDRESS"`
 }
@@ -249,10 +243,6 @@ func DefaultConfig(dataDir string) *Config {
 		SFTP: SFTP{
 			Enable: false,
 			Listen: ":5222",
-		},
-		WebDAV: WebDAV{
-			Enable: false,
-			Listen: ":5245",
 		},
 		LastLaunchedVersion: "",
 		ProxyAddress:        "",

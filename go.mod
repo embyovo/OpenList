@@ -122,8 +122,6 @@ require (
 	github.com/minio/xxml v0.0.3 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
-	github.com/otiai10/mint v1.6.3 // indirect
-	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/relvacode/iso8601 v1.6.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.uber.org/mock v0.5.0 // indirect
